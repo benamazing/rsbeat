@@ -3,7 +3,7 @@ package beater
 import (
 	"fmt"
 	"time"
-
+	"strings"
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
@@ -31,8 +31,16 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	logp.Info("config.Redis: %v", config.Redis)
 	logp.Info("config.slowerThan: %v", config.SlowerThan)
 	var poolList = make(map[string]*redis.Pool)
-	for _, ipPort := range config.Redis {
-		poolList[ipPort] = poolInit(ipPort, config.SlowerThan)
+	for _, ipPortAndPass := range config.Redis {
+		splits := strings.Split(ipPortAndPass, ",")
+		if len(splits) == 1 {
+			ipPort := ipPortAndPass
+			poolList[ipPort] = poolInit(ipPort, "", config.SlowerThan)
+		} else {
+			ipPort := splits[0]
+			password := splits[1]
+			poolList[ipPort] = poolInit(ipPort, password, config.SlowerThan)
+		}
 		logp.Info("redis: %s", ipPort)
 	}
 
@@ -127,13 +135,21 @@ func (bt *Rsbeat) redisc(beatname string, init bool, c redis.Conn, ipPort string
 	}
 }
 
-func poolInit(server string, slowerThan int) *redis.Pool {
+func poolInit(server string, password string, slowerThan int) *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:     3,
 		MaxActive:   3,
 		IdleTimeout: 240 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", server, redis.DialConnectTimeout(3*time.Second), redis.DialReadTimeout(3*time.Second))
+			var c redis.Conn
+			var err error
+			if len(strings.TrimSpace(password)) == 0 {
+				c, err = redis.Dial("tcp", server, redis.DialConnectTimeout(3*time.Second), redis.DialReadTimeout(3*time.Second))
+
+			} else {
+				c, err = redis.Dial("tcp", server, redis.DialConnectTimeout(3*time.Second), redis.DialReadTimeout(3*time.Second), redis.DialPassword(password))
+			}
+
 			if err != nil {
 				logp.Err("redis: error occurs when connect %v", err.Error())
 				return nil, err

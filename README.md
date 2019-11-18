@@ -89,7 +89,7 @@ rsbeat:
   slowerThan: 100 
 ```
 * rsbeat.period: Defines how often an event is sent to the output.
-* rsbeat.redis: Defines redis server list.
+* rsbeat.redis: Defines redis server list, if redis server has authentication, specifies the redis string as "ip:port,password", which separated by comma.
 * rsbeat.slowerThan: Defines time in microseconds which is sent to redis server by command `config set slowlog-log-slower-than`.
 
 [Back to TOC](#table-of-contents)
