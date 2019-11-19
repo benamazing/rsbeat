@@ -10,7 +10,7 @@ import (
 	"github.com/elastic/beats/libbeat/publisher"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/yourdream/rsbeat/config"
+	"github.com/benamazing/rsbeat/config"
 )
 
 type Rsbeat struct {
@@ -32,12 +32,13 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	logp.Info("config.slowerThan: %v", config.SlowerThan)
 	var poolList = make(map[string]*redis.Pool)
 	for _, ipPortAndPass := range config.Redis {
+                var ipPort string
 		splits := strings.Split(ipPortAndPass, ",")
 		if len(splits) == 1 {
-			ipPort := ipPortAndPass
+			ipPort = ipPortAndPass
 			poolList[ipPort] = poolInit(ipPort, "", config.SlowerThan)
 		} else {
-			ipPort := splits[0]
+			ipPort = splits[0]
 			password := splits[1]
 			poolList[ipPort] = poolInit(ipPort, password, config.SlowerThan)
 		}
