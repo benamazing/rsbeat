@@ -9,10 +9,12 @@ type Config struct {
 	Period     time.Duration `config:"period"`
 	Redis      []string      `config:"redis"`
 	SlowerThan int           `config:"slowerThan"`
+	MaxLen int           `config:"maxLen"`
 }
 
 var DefaultConfig = Config{
 	Period:     1 * time.Second,
 	Redis:      []string{"127.0.0.1:6379"},
 	SlowerThan: 100, //ms
+	MaxLen: 500,
 }

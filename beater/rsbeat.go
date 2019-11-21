@@ -36,11 +36,11 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		splits := strings.Split(ipPortAndPass, ",")
 		if len(splits) == 1 {
 			ipPort = ipPortAndPass
-			poolList[ipPort] = poolInit(ipPort, "", config.SlowerThan)
+			poolList[ipPort] = poolInit(ipPort, "", config.SlowerThan, config.MaxLen)
 		} else {
 			ipPort = splits[0]
 			password := splits[1]
-			poolList[ipPort] = poolInit(ipPort, password, config.SlowerThan)
+			poolList[ipPort] = poolInit(ipPort, password, config.SlowerThan, config.MaxLen)
 		}
 		logp.Info("redis: %s", ipPort)
 	}
@@ -136,7 +136,7 @@ func (bt *Rsbeat) redisc(beatname string, init bool, c redis.Conn, ipPort string
 	}
 }
 
-func poolInit(server string, password string, slowerThan int) *redis.Pool {
+func poolInit(server string, password string, slowerThan int, maxLen int) *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:     3,
 		MaxActive:   3,
@@ -157,8 +157,8 @@ func poolInit(server string, password string, slowerThan int) *redis.Pool {
 			}
 			c.Send("MULTI")
 			c.Send("CONFIG", "SET", "slowlog-log-slower-than", slowerThan)
-			c.Send("CONFIG", "SET", "slowlog-max-len", 500)
-			c.Send("SLOWLOG", "RESET")
+			c.Send("CONFIG", "SET", "slowlog-max-len", maxLen)
+			//c.Send("SLOWLOG", "RESET")
 			r, err := c.Do("EXEC")
 
 			if err != nil {
